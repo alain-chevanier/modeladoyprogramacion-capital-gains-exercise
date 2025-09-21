@@ -1,0 +1,356 @@
+#+title: Problema: Capital Gains
+
+* Problema
+Se te encarga implementar una aplicación de línea de comandos (CLI) que calcule cuántos impuestos (tax) debes pagar en función de la ganancia (profit) o pérdida (loss) de una inversión en el mercado de valores.
+
+Asegúrate de leer todas las instrucciones a continuación y no dudes en pedir aclaraciones si es necesario.
+
+* Uso de muestra de Capital Gains
+** Cómo debe funcionar el programa
+*** Input
+Tu programa va a recibir arreglos (uno por línea) que contienen operaciones del mercado de valores codificadas en ~JSON~, a través de la entrada estándar (~stdin~), que contienen los siguientes campos:
+
+|------------------+-----------------------------------------------------|
+| Nombre del campo | Significado                                         |
+|------------------+-----------------------------------------------------|
+| ~operation~        | Si la operación fue una compra (buy) o venta (sell) |
+| ~unit-cost~        | Costo de unidad de cada acción usando dos decimales |
+| ~quantity~         | La cantidad de acciones negociados                  |
+|------------------+-----------------------------------------------------|
+
+Aquí tienes un ejemplo de input (formateado para claridad; en el input real, cada arreglo estaría en su propia línea):
+#+begin_src json
+[{"operation":"buy", "unit-cost":10.00, "quantity": 10000},
+{"operation":"sell", "unit-cost":20.00, "quantity": 5000}]
+[{"operation":"buy", "unit-cost":20.00, "quantity": 10000},
+{"operation":"sell", "unit-cost":10.00, "quantity": 5000}]
+#+end_src
+
+Las operaciones están en el orden en que ocurrieron; esto significa que la segunda operación del arreglo ocurrió después de la primera, y así sucesivamente.
+
+Cada línea es una simulación independiente; tu programa no debe arrastrar el estado obtenido de una línea a las otras.
+
+La última línea del input será una línea en blanco.
+
+*** Output
+Para cada línea del input, el programa debe devolver un arreglo que describa cuánto impuesto debe pagarse por cada operación recibida, codificado en ~JSON~ a través de la salida estándar (stdout), conteniendo el siguiente campo:
+
+|------------------+-----------------------------------------------------------------|
+| Nombre del campo | Significado                                                     |
+|------------------+-----------------------------------------------------------------|
+| ~tax~              | La canitdad de impuestos que será pagada basada en la operación |
+|------------------+-----------------------------------------------------------------|
+
+Aquí tienes un ejemplo del output esperado:
+
+#+begin_src json
+[{"tax": 0.0}, {"tax": 10000.0}]
+[{"tax": 0.0}, {"tax": 0.0}]
+#+end_src
+
+La lista de resultados debe tener el tamaño exacto de la lista de input de operaciones. Por ejemplo, dado tres operaciones (buy, buy, sell), deben existir tres resultados que representen el tax para cada operación.
+
+* Reglas de Capital Gains
+En resumen, el programa recibirá dos tipos de operaciones (~buy~ y ~sell~) para calcular el impuesto de ganancias de capital. El impuesto es fijo en 20% del *ganancia general* obtenido al negociar acciones, y las operaciones con un monto total menor o igual a *$20,000.00* no pagan impuestos. Las reglas para calcular el impuesto se detallan a continuación:
+
++ El porcentaje que pagas en impuestos es el 20% de la ganancia de la operación, pero como las acciones pudieron haberse comprado a diferentes precios, se debe considerar el precio de *promedio ponderado* como el precio de compra (ver abajo).
++ El precio de *promedio ponderado* es el precio medio de compra teniendo en cuenta la cantidad de stocks comprados hasta el momento. Así, cuando compras acciones debes recalcular el promedio ponderado usando esta fórmula ~new-weighted-average-price = ((current-stock-quantity * weighted-average-price) + (new-stock-quantity * new-price)) / (current-stock-quantity + new-stock-quantity)~. Por ejemplo, si compraste 10 acciones a $20.00, vendiste 5 y compraste otros 5 a $10.00, el promedio ponderado es ~((5 x 20.00) + (5 x 10.00)) / (5 + 5) = 15.00~.
++ Perdidas (es decir, estás vendiendo a un precio menor que el precio promedio ponderado al que compraste) no pagan impuestos, y debes deducir la perdida de las ganancias posteriores antes de calcular el impuesto. En otras palabras, el impuesto aplica sobre la *ganancia general*, por lo que debes usar una perdida pasada en múltiples ganacias futuras (hasta deducir el monto completo).
++ No pagas impuestos ni deduces la ganancia de las pérdiodas acumuladas si el monto total de la operación (costo unitario de venta x cantidad) es menor o igual a $20,000.00 (pero las perdidas deben deducirse de las ganancias posteriores). Recuerda usar el monto total y no la ganancia para decidir si debes pagar impuesto.
++ No pagas impuestos por comprar acciones.
+
+Puedes asumir que ninguna operación venderá más acciones de las que tienes actualmente.
+
+* Ejemplos de Capital Gains
+Nota: Las operaciones se muestran en líneas separadas para ajustar el ancho de la página; cada línea de input contendrá un arreglo completo.
+
+** Case #1
+|-----------+-----------+----------+-----+---------------------------------|
+| Operation | Unit Cost | Quantity | Tax | Explanation                     |
+|-----------+-----------+----------+-----+---------------------------------|
+| buy       |     10.00 |      100 |   0 | Buying stocks do not pay taxes  |
+| sell      |     15.00 |       50 |   0 | Total amount less than $20,000  |
+| sell      |     15.00 |       50 |   0 | Total amount less than $20,000  |
+|-----------+-----------+----------+-----+---------------------------------|
+
+Input:
+#+begin_src json
+[{"operation":"buy", "unit-cost":10.00, "quantity": 100},
+{"operation":"sell", "unit-cost":15.00, "quantity": 50},
+{"operation":"sell", "unit-cost":15.00, "quantity": 50}]
+#+end_src
+
+Output:
+#+begin_src json
+[{"tax": 0.0},{"tax": 0.0},{"tax": 0.0}]
+#+end_src
+
+** Case #2
+|-----------+-----------+----------+-------+-------------------------------------------------------------------------------------|
+| Operation | Unit Cost | Quantity |   Tax | Explanation                                                                         |
+|-----------+-----------+----------+-------+-------------------------------------------------------------------------------------|
+| buy       |     10.00 |    10000 |     0 | Buying stocks do not pay taxes                                                      |
+| sell      |     20.00 |     5000 | 10000 | Profit of $ 50,000: 20% of taxes is $ 10,000 and there is no previous losses to use |
+| sell      |      5.00 |     5000 |     0 | Loss of $ 25,000: no taxes                                                          |
+|-----------+-----------+----------+-------+-------------------------------------------------------------------------------------|
+
+Input:
+#+begin_src json
+[{"operation":"buy", "unit-cost":10.00, "quantity": 10000},
+{"operation":"sell", "unit-cost":20.00, "quantity": 5000},
+[{"operation":"sell", "unit-cost":5.00, "quantity": 5000}]
+#+end_src
+
+Output:
+#+begin_src json
+[{"tax": 0.0},{"tax": 10000.0},{"tax": 0.0}]
+#+end_src
+
+** Case #1 + Case #2
+Cuando la aplicación recibe dos líneas, deben manejarse como simulaciones independientes. El programa no debe arrastrar el estado del procesamiento del primer input a las otras ejecuciones.
+
+Input:
+#+begin_src json
+[{"operation":"buy", "unit-cost":10.00, "quantity": 100},
+{"operation":"sell", "unit-cost":15.00, "quantity": 50},
+{"operation":"sell", "unit-cost":15.00, "quantity": 50}]
+[{"operation":"buy", "unit-cost":10.00, "quantity": 10000},
+{"operation":"sell", "unit-cost":20.00, "quantity": 5000},
+{"operation":"sell", "unit-cost":5.00, "quantity": 5000}]
+#+end_src
+
+Output:
+#+begin_src json
+[{"tax": 0.0},{"tax": 0.0},{"tax": 0.0}]
+[{"tax": 0.0},{"tax": 10000.0},{"tax": 0.0}]
+#+end_src
+
+** Case #3
+|-----------+-----------+----------+------+-------------------------------------------------------------------------------------|
+| Operation | Unit Cost | Quantity |  Tax | Explanation                                                                         |
+|-----------+-----------+----------+------+-------------------------------------------------------------------------------------|
+| buy       |     10.00 |    10000 |    0 | Buying stocks do not pay taxes                                                      |
+| sell      |      5.00 |     5000 |    0 | Loss of $ 25,000: no taxes                                                          |
+| sell      |     20.00 |     3000 | 1000 | Profit of $ 30,000: deduct Loss of $ 25,000 and pay 20% of $5,000 in taxes ($1,000) |
+|-----------+-----------+----------+------+-------------------------------------------------------------------------------------|
+
+Input:
+#+begin_src json
+[{"operation":"buy", "unit-cost":10.00, "quantity": 10000},
+{"operation":"sell", "unit-cost":5.00, "quantity": 5000},
+{"operation":"sell", "unit-cost":20.00, "quantity": 3000}]
+#+end_src
+
+Output:
+#+begin_src json
+[{"tax": 0.0},{"tax": 0.0},{"tax": 1000.0}]
+#+end_src
+
+** Case #4
+|-----------+-----------+----------+-----+-----------------------------------------------------------------------------------------------|
+| Operation | Unit Cost | Quantity | Tax | Explanation                                                                                   |
+|-----------+-----------+----------+-----+-----------------------------------------------------------------------------------------------|
+| buy       |     10.00 |    10000 |   0 | Buying stocks do not pay taxes                                                                |
+| buy       |     25.00 |     5000 |   0 | Buying stocks do not pay taxes                                                                |
+| sell      |     15.00 |    10000 |   0 | Considering average price of $15 ~((10×10,000 + 25×5,000) ÷ 15,000)~ there is no profit or loss |
+|-----------+-----------+----------+-----+-----------------------------------------------------------------------------------------------|
+
+Input:
+#+begin_src json
+[{"operation":"buy", "unit-cost":10.00, "quantity": 10000},
+{"operation":"buy", "unit-cost":25.00, "quantity": 5000},
+{"operation":"sell", "unit-cost":15.00, "quantity": 10000}]
+#+end_src
+
+Output:
+#+begin_src json
+[{"tax": 0.0},{"tax": 0.0},{"tax": 0.0}]
+#+end_src
+
+** Case #5
+|-----------+-----------+----------+-------+-----------------------------------------------------------------------------------------------|
+| Operation | Unit Cost | Quantity |   Tax | Explanation                                                                                   |
+|-----------+-----------+----------+-------+-----------------------------------------------------------------------------------------------|
+| buy       |     10.00 |    10000 |     0 | Buying stocks do not pay taxes                                                                |
+| buy       |     25.00 |     5000 |     0 | Buying stocks do not pay taxes                                                                |
+| sell      |     15.00 |    10000 |     0 | Considering average price of $ 15 there is no profit or loss                                  |
+| sell      |     25.00 |     5000 | 10000 | Considering average price of $ 15 profit of $ 50,000: pay 20% of $ 50,000 in taxes ($ 10,000) |
+|-----------+-----------+----------+-------+-----------------------------------------------------------------------------------------------|
+
+Input:
+#+begin_src json
+[{"operation":"buy", "unit-cost":10.00, "quantity": 10000},
+{"operation":"buy", "unit-cost":25.00, "quantity": 5000},
+{"operation":"sell", "unit-cost":15.00, "quantity": 10000},
+{"operation":"sell", "unit-cost":25.00, "quantity": 5000}]
+#+end_src
+
+Output:
+#+begin_src json
+[{"tax": 0.0},{"tax": 0.0},{"tax": 0.0},{"tax": 10000.0}]
+#+end_src
+
+** Case #6
+|-----------+-----------+----------+------+-------------------------------------------------------------------------------------------------------|
+| Operation | Unit Cost | Quantity |  Tax | Explanation                                                                                           |
+|-----------+-----------+----------+------+-------------------------------------------------------------------------------------------------------|
+| buy       |     10.00 |    10000 |    0 | Buying stocks do not pay taxes                                                                        |
+| sell      |      2.00 |     5000 |    0 | Loss of $ 40,000: no taxes should deduct that loss regardless of that                                 |
+| sell      |     20.00 |     2000 |    0 | Profit of $ 20,000: if you deduct all the loss, profit is zero. Still have $ 20,000 of loss to deduct |
+| sell      |     20.00 |     2000 |    0 | Profit of $ 20,000: if you deduct all the loss, profit is zero. Now there is no loss to deduct        |
+| sell      |     25.00 |     1000 | 3000 | Profit of $ 15,000 and zero losses to deduct: pay 20% of $15,000 in taxes ($3,000)                    |
+|-----------+-----------+----------+------+-------------------------------------------------------------------------------------------------------|
+
+Input:
+#+begin_src json
+[{"operation":"buy", "unit-cost":10.00, "quantity": 10000},
+{"operation":"sell", "unit-cost":2.00, "quantity": 5000},
+[{"operation":"sell", "unit-cost":20.00, "quantity": 2000},
+{"operation":"sell", "unit-cost":20.00, "quantity": 2000},
+{"operation":"sell", "unit-cost":25.00, "quantity": 1000}]
+#+end_src
+
+Output:
+#+begin_src json
+[{"tax": 0.0},{"tax": 0.0},{"tax": 0.0},{"tax": 0.0},{"tax": 3000.0}]
+#+end_src
+
+** Case #7
+|-----------+-----------+----------+------+-------------------------------------------------------------------------------------------------------------------------------|
+| Operation | Unit Cost | Quantity |  Tax | Explanation                                                                                                                   |
+|-----------+-----------+----------+------+-------------------------------------------------------------------------------------------------------------------------------|
+| buy       |     10.00 |    10000 |    0 | Buying stocks do not pay taxes                                                                                                |
+| sell      |      2.00 |     5000 |    0 | Loss of $ 40,000: total amount is less than $ 20,000, but we should deduct that loss regardless of that                       |
+| sell      |     20.00 |     2000 |    0 | Profit of $ 20,000: if you deduct all the loss, profit is zero. Still have $ 20,000 of loss to deduct                         |
+| sell      |     20.00 |     2000 |    0 | Profit of $ 20,000: if you deduct all the loss, profit is zero. Now there is no loss to deduct                                |
+| sell      |     25.00 |     1000 | 3000 | Profit of $ 15,000 and zero losses to deduct: pay 20% of $15,000 in taxes ($3,000)                                            |
+| buy       |     20.00 |    10000 |    0 | All stocks were sold. Buying new ones changes the average price to the paid price of the new stocks ($20)                     |
+| sell      |     15.00 |     5000 |    0 | Loss of $ 25,000                                                                                                              |
+| sell      |     30.00 |     4350 | 3700 | Profit of $ 43,500: if you deduct the loss of $25,000, there is $ 18,500 of profit left. Pay 20% of $18,500 in taxes ($3,700) |
+| sell      |     30.00 |      650 |    0 | Profit of $ 6,500: no loss to deduct, but the total amount is less than $ 20,000                                              |
+|-----------+-----------+----------+------+-------------------------------------------------------------------------------------------------------------------------------|
+
+Input:
+#+BEGIN_SRC json
+[{"operation":"buy", "unit-cost":10.00, "quantity": 10000},
+{"operation":"sell", "unit-cost":2.00, "quantity": 5000},
+{"operation":"sell", "unit-cost":20.00, "quantity": 2000},
+{"operation":"sell", "unit-cost":20.00, "quantity": 2000},
+{"operation":"sell", "unit-cost":25.00, "quantity": 1000},
+{"operation":"buy", "unit-cost":20.00, "quantity": 10000},
+{"operation":"sell", "unit-cost":15.00, "quantity": 5000},
+{"operation":"sell", "unit-cost":30.00, "quantity": 4350},
+{"operation":"sell", "unit-cost":30.00, "quantity": 650}]
+#+END_SRC
+
+Output:
+#+BEGIN_SRC json
+[{"tax": 0.0},{"tax": 0.0},{"tax": 0.0},{"tax": 0.0},{"tax": 3000.0},
+[{"tax": 0.0},{"tax": 0.0},{"tax": 3700.0},{"tax": 0.0}]
+#+END_SRC
+
+** Case #8
+|-----------+-----------+----------+-------+-------------------------------------------------------------|
+| Operation | Unit Cost | Quantity |   Tax | Explanation                                                 |
+|-----------+-----------+----------+-------+-------------------------------------------------------------|
+| buy       |     10.00 |    10000 |     0 | Buying stocks do not pay taxes                              |
+| sell      |     50.00 |    10000 | 80000 | Profit of $400,000: pay 20% of $ 400,000 in taxes ($80,000) |
+| buy       |     20.00 |    10000 |     0 | Buying stocks do not pay taxes                              |
+| sell      |     50.00 |    10000 | 60000 | Profit of $300,000: pay 20% of $ 300,000 in taxes ($60,000) |
+|-----------+-----------+----------+-------+-------------------------------------------------------------|
+
+Input:
+#+begin_src json
+[{"operation":"buy", "unit-cost":10.00, "quantity": 10000},
+{"operation":"sell", "unit-cost":50.00, "quantity": 10000},
+[{"operation":"buy", "unit-cost":20.00, "quantity": 10000},
+{"operation":"sell", "unit-cost":50.00, "quantity": 10000}]
+#+end_src
+
+Output:
+#+begin_src json
+[{"tax": 0.0},{"tax": 80000.0},{"tax": 0.0},{"tax": 60000.0}]
+#+end_src
+
+** Case #9
+|-----------+-----------+----------+-----+---------------------------------|
+| Operation | Unit Cost | Quantity | Tax | Explanation                     |
+|-----------+-----------+----------+-----+---------------------------------|
+| buy       |   5000.00 |       10 |   0 | Buying stocks do not pay taxes  |
+| sell      |   4000.00 |        5 |   0 | Loss of $5,000: total amount is equal $ 20,000, but we should deduct that loss regardless of that |
+| buy       |  15000.00 |        5 |   0 | Buying stocks do not pay taxes  |
+| buy       |   4000.00 |        2 |   0 | Buying stocks do not pay taxes  |
+| buy       |  23000.00 |        2 |   0 | Buying stocks do not pay taxes  |
+| sell      |  20000.00 |        1 |   0 | Total operation amount <= $20,000: it does not pay taxes nor touches the losses  |
+| sell      |  12000.00 |       10 |1000 | Profit of $ 10,000: if you deduct the loss of $5,000, there is $5,000 of profit left. Pay 20% of $ 5,000 in taxes ($1,000)    |
+| sell      |  15000.00 |        3 |2400 | Profit of $12,000 and zero losses to deduct: Pay 20% of $12,000 in taxes ($2,400)    |
+
+Input:
+#+begin_src json
+[{"operation":"buy", "unit-cost": 5000.00, "quantity": 10},
+{"operation":"sell", "unit-cost": 4000.00, "quantity": 5},
+[{"operation":"buy", "unit-cost": 15000.00, "quantity": 5},
+{"operation":"buy", "unit-cost": 4000.00, "quantity": 2},
+{"operation":"buy", "unit-cost": 23000.00, "quantity": 2},
+{"operation":"sell", "unit-cost": 20000.00, "quantity": 1},
+{"operation":"sell", "unit-cost": 12000.00, "quantity": 10},
+{"operation":"sell", "unit-cost": 15000.00, "quantity": 3}]
+#+end_src
+
+Output:
+#+begin_src json
+[{"tax": 0.0},{"tax": 0.0},{"tax": 0.0},{"tax": 0.0},{"tax": 0.0},
+[{"tax": 0.0},{"tax": 1000.0},{"tax": 2400.0}]
+[{"tax": 0.0},{"tax": 0.0},{"tax": 0.0},{"tax": 0.0},{"tax": 0.0},
+[{"tax": 0.0},{"tax": 1000.0},{"tax": 2400.0}]
+#+end_src
+
+* Estado de la aplicación
+El programa *no debe* depender de ninguna base de datos externa, y el estado interno de la aplicación debe manejarse mediante una estructura explícita en memoria. El estado de la aplicación debe reiniciarse al inicio de la aplicación.
+
+* Redondeo de decimales
+El programa debe redondear al centésimo más cercano (dos decimales) al trabajar con números decimales. Por ejemplo:
+Si buy 10 acciones por $20.00 y 5 acciones por $10.00, el precio promedio ponderado es ~(10 x 20.00 + 5 x 10.00) / 15 = 16.67~.
+
+* Manejo de errores
+Por favor, asume que no habrá errores de análisis del input. No evaluaremos tu envío contra un input que contenga errores, esté mal formateado o que rompa el contrato.
+
+* Formato de números en el output
+En las bibliotecas más comunes de algunos lenguajes que manejan JSON, los ceros finales se eliminan. Si esto ocurre en el lenguaje que elijas, prefiere devolver un número (Int, Long, Float, Double, BigDecimal, etc.) con menos dígitos, en lugar de convertirlos a otros tipos (cadenas, etc.).
+
+* Nuestras expectativas
+Valoramos los siguientes criterios:
++ /Simplicidad/: se espera que la solución sea un proyecto pequeño y fácil de entender;
++ Elegancia: se espera que la solución sea fácil de mantener, tenga una clara separación de responsabilidades y una organización del código bien estructurada;
++ Operatividad: se espera que la solución resuelva el problema, cubra posibles casos límite y sea extensible para futuras decisiones de diseño;
++ Calidad: a medida que estructuras tu código, esperamos que escribas tests para asegurar que el programa funcione correctamente. Tests bien escritos ayudan a construir una solución robusta y mantenible;
++ Buenas prácticas: además de los unit tests, recomendamos y esperamos que escribas tests que cubran tu solución de extremo a extremo, es decir, desde el input del programa hasta el output. Una forma de hacerlo es agregando tests de integración;
++ Validación de tests: esperamos que la solución sea validada con tests. La ausencia de tests puede impactar la evaluación de la calidad de tu solución, ya que consideramos los tests como una parte esencial del proceso de desarrollo.
+
+Buscaremos:
++ El uso de transparencia referencial cuando aplique;
++ Unit e integration tests de calidad;
++ Documentación donde sea necesaria;
+
+* Agrega un README
+Tu solución debe contener un archivo README que incluya:
+- Discusión de las decisiones técnicas y arquitectónicas;
+
+* FAQ
+#+begin_quote
+Q: ¿Cómo leo el input a través de stdin? ¿Tiene que estar en un archivo input.txt? ¿Debo pedir al usuario que ingrese el nombre del archivo por la terminal?
+#+end_quote
+
+A: Leer a través de stdin suele ser la forma más simple de leer input en cualquier aplicación de línea de comandos. Tu solución debe esperar que el usuario ingrese cada línea en la terminal y presione 'enter'. Esto también nos permite pasar el input mediante redirección de entrada. Por ejemplo:
+
+#+begin_example
+./capital-gains < input.txt
+#+end_example
+
+Además, no esperamos que tu solución imprima ninguna explicación al usuario, como ~"Please, insert the operations:"~. Puedes asumir que el usuario sabe qué input espera tu programa y en qué orden. El único output que se espera imprimir son las respuestas JSON de tax.
+
+#+begin_quote
+Q: ¿Puede haber un evento buy después de eventos sell? En ese caso, ¿debe recalcularse el precio promedio de compra utilizando la nueva compra junto con las compras anteriores?
+#+end_quote
+
+A: Sí, el precio promedio de compra siempre debe considerar todos los eventos de compra anteriores hasta el evento sell actual. Por favor, consulta el Case #7 para un ejemplo práctico.

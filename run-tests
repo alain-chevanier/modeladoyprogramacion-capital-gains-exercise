@@ -1,0 +1,30 @@
+#! /usr/bin/env bash
+
+ERRORS=""
+COUNTER=0
+TOTAL_TESTS=9
+JAR_PATH="target/capital-gains-1.0.jar"
+for i in 1 2 3 4 5 6 7 8 9
+do
+  java -jar ${JAR_PATH} < examples/case"${i}"-input.txt > examples/case"${i}"-actual-output.txt
+  DIFF=$(diff examples/case"${i}"-expected-output.txt examples/case"${i}"-actual-output.txt)
+  if [ "$DIFF" != "" ]
+  then
+      echo "Prueba $i: FAIL"
+      echo "$DIFF"
+      ERRORS="$i"
+  else
+      echo "Prueba $i: PASS"
+      COUNTER=$((COUNTER + 1))
+  fi
+done
+
+echo "SUMMARY $COUNTER/$TOTAL_TESTS PASS"
+
+if [ -z "$ERRORS" ] ;  then
+    echo "TESTS SUCCEEDED"
+    exit 0
+else
+    echo "TESTS FAILED"
+    exit 255
+fi

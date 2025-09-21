@@ -1,0 +1,101 @@
+#+title: Práctica: Capital Gains
+#+author: Alaín Chevanier
+
+* Objetivo
+El objetivo de esta práctica es ejercitar:
++ ~Clean Code~: legibilidad, simplicidad, funciones pequeñas, nombres claros y eliminación de duplicación.
++ ~SOLID Principles~: ~SRP~, ~OCP~, ~LSP~, ~ISP~ y ~DIP~  aplicados a la solución de problemas cuya solución se tiene que implementar mediuante varias clases.
++ ~Unit Tests~: casos sin mock objects cuando el código es puramente de dominio y no tiene dependencias externas, y casos con mocks cuando interactuamos con límites.
++ ~TDD~: ciclo red–green–refactor para guiar el diseño y asegurar calidad desde el inicio.
++ ~Integración continua (CI)~: verificación automática de compilación, formato, tests y cobertura en cada cambio.
+
+Sugerencia: puedes apoyarte en los comandos de ~AGENTS.md~ para construir, formatear y ejecutar los tests localmente y en el workflow de GitHub Actions en ~.github/workflows/run-tests.yml~.
+
+* Introducción
+Esta práctica implementa el problema de *Capital Gains* como una aplicación de línea de comandos. El enfoque busca mantener el código simple y extensible (clean code & OO Design SOLID Principles), con diseño guiado por pruebas y buenas prácticas de ingeniería de software.
+
+* Problema
+La descripción completa del problema la puedes encontrar en el archivo [[file:DESCRIPTION.es.org][DESCRIPCION.es.org]].
+
+* Entrega
+Deja todo el código con tu solución en la rama *main*, pues por omisión es esta rama la que compara *Github Classroom* contra la versión inicial del código mediante el /Pull Request/ llamado /Feedback/, el cual nosotros vamos a revisar para evaluar tu entrega.
+
+Para verificar que tu código cumple con la especificación, en tu /Pull Request/ debes de pasar las dos validaciones que hace Github Actions sobre el código, una de ellas verifica que pasas las pruebas automatizadas, y la otra que hayas formateado tu código con el plugin de maven.
+
+Además, no olvides marcar en classroom la tarea como entregada y en ella incluir el enlace hacia el /Pull Request/ que contiene tu solución.
+
+La fecha de entrega de tu práctica va a ser el máximo entre la fecha en la que abriste el /Pull Request/ y la fecha en la que hiciste el último push al repositorio con tu solución.
+
+* Desarrollo
+** Requirimientos
+- Java 17 (JDK)
+
+** Run Tests
+- Todos los tests:
+  #+begin_src sh
+  ./mvnw test
+  #+end_src
+
+- Una clase de test:
+  #+begin_src sh
+  ./mvnw -Dtest=MyClassTest test
+  #+end_src
+
+- Un método de test:
+  #+begin_src sh
+  ./mvnw -Dtest=MyClassTest#myTestMethodName test
+  #+end_src
+
+- Usando el script para correr todos los tests de integración
+  #+begin_src sh
+  ./run-tests
+  #+end_src
+
+** Build
+#+begin_src sh
+./mvnw clean verify
+#+end_src
+
+** Run (dev)
+#+begin_src sh
+./mvnw spring-boot:run < examples/case1-input.txt
+#+end_src
+
+** Package and run JAR
+#+begin_src sh
+./mvnw -DskipTests package
+java -jar target/capital-gains-1.0.jar < examples/case1-input.txt
+#+end_src
+
+** Run using docker
+1. Para construir la imagen de docker, compilando el código e incluyendo todos los archivos necesarios para correr el problema y las pruebas
+   #+begin_src sh
+   docker build -t capital-gains .
+   #+end_src
+
+2. Una vez construida la imagen, puedes correr todos los escenarios de aceptación con el siguiente comando
+   #+begin_src sh
+   docker run capital-gains bash run-tests
+   #+end_src
+
+3. Para correr cualquier otro comando de la sección anterior dentro del contenedor, simplemente inicia la shell bash en él
+   #+begin_src sh
+   docker run -it capital-gains bash
+   #+end_src
+
+* Criterios de evaluación
+** Solución correcta (30%)
+La implementación debe pasar todos los tests de integración. En github tu Pull Request debe pasar la validación de Github Actions que corre todos los tests de integración.
+
+** Calidad del código (40%)
+- Código limpio y bien estructurado. Revisar los slides de Clean Code.
+- Uso adecuado de principios SOLID. Principlamente SRP, DIP e ISP. Revisar los slides de SOLID.
+
+** Pruebas automatizadas (30%)
+- Uso adecuado de pruebas unitarias.
+
+** Extra (hasta 10%)
+- Utilizar lambdas y streams de Java 8.
+- Utilizar Optional de Java 8.
+- Utilizar records de Java 16.
+- En general utilizar características modernas e idiomáticas de Java.
