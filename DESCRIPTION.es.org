@@ -316,7 +316,52 @@ Si buy 10 acciones por $20.00 y 5 acciones por $10.00, el precio promedio ponder
 Por favor, asume que no habrá errores de análisis del input. No evaluaremos tu envío contra un input que contenga errores, esté mal formateado o que rompa el contrato.
 
 * Formato de números en el output
-En las bibliotecas más comunes de algunos lenguajes que manejan JSON, los ceros finales se eliminan. Si esto ocurre en el lenguaje que elijas, prefiere devolver un número (Int, Long, Float, Double, BigDecimal, etc.) con menos dígitos, en lugar de convertirlos a otros tipos (cadenas, etc.).
+En las bibliotecas más comunes de algunos lenguajes que manejan ~JSON~, los ceros finales se eliminan. Si esto ocurre en el lenguaje que elijas, prefiere devolver un número (Int, Long, Float, Double, BigDecimal, etc.) con menos dígitos, en lugar de convertirlos a otros tipos (cadenas, etc.).
+
+Nota: Los números de punto flotante (~float~, ~double~) pueden introducir errores de redondeo en algunos casos. Si decides usar estos tipos, asegúrate de que tu solución pase todos los tests. Otra opción es usar tipos que manejen decimales con precisión, como ~BigDecimal~ en Java.
+
+Para que un ~BigDecimal~ mantenga los ceros a la derecha, puedes usar el método ~new BigDecimal(number).setScale(2, RoundingMode.HALF_UP);~, donde ~number~ es una cadena que contiene un número decimal, por ejemplo ~"1000.00"~.
+
+* Leer y escribir JSON
+
+
+Nota: Los números de punto flotante (~float~, ~double~) pueden introducir errores de redondeo en algunos casos. Si decides usar estos tipos, asegúrate de que tu solución pase todos los tests. Otra opción es usar tipos que manejen decimales con precisión, como ~BigDecimal~ en Java.
+
+Para que un ~BigDecimal~ mantenga los ceros a la derecha, puedes usar el método ~new BigDecimal(number).setScale(2, RoundingMode.HALF_UP);~, donde ~number~ es una cadena que contiene un número decimal, por ejemplo ~"1000.00"~.
+
+* Leer y escribir JSON
+Para leer y escribir ~JSON~ utiliza la biblioteca ~Jackson~, dicha biblioteca ya se encuentra incluida en la base de código que recibes para resolver este problema.
+
+Para escribir un objeto a ~JSON~:
+#+begin_src java
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+@Data
+@Jacksonized
+class Tax {
+    private BigDecimal tax;
+
+    public Tax(String tax) {
+        this.tax = new BigDecimal(tax);
+    }
+}
+
+List<Tax> listOfTaxes = List.of(new Tax("0.00"), new Tax("10000.00"));
+ObjectMapper objectMapper = new ObjectMapper();
+String jsonString = objectMapper.writeValueAsString(listOfTaxes);
+System.out.println(jsonString);
+// Output: [{"tax":0.00},{"tax":10000.00}]
+#+end_src
+
+Para leer un objeto desde ~JSON~:
+#+begin_src java
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+String jsonInput = "[{\"operation\": \"buy\", \"unit-cost\":10.00, \"quantity\": 10000}, {\"operation\":\"sell\", \"unit-cost\":20.00, \"quantity\": 5000}]";
+ObjectMapper objectMapper = new ObjectMapper();
+List<Operation> operations = objectMapper.readValue(jsonInput, new TypeReference<List<Operation>>() {});
+#+end_src
 
 * Nuestras expectativas
 Valoramos los siguientes criterios:
