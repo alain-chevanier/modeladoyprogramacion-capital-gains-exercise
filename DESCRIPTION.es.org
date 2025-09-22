@@ -320,21 +320,18 @@ En las bibliotecas más comunes de algunos lenguajes que manejan JSON, los ceros
 
 * Nuestras expectativas
 Valoramos los siguientes criterios:
-+ /Simplicidad/: se espera que la solución sea un proyecto pequeño y fácil de entender;
-+ Elegancia: se espera que la solución sea fácil de mantener, tenga una clara separación de responsabilidades y una organización del código bien estructurada;
-+ Operatividad: se espera que la solución resuelva el problema, cubra posibles casos límite y sea extensible para futuras decisiones de diseño;
-+ Calidad: a medida que estructuras tu código, esperamos que escribas tests para asegurar que el programa funcione correctamente. Tests bien escritos ayudan a construir una solución robusta y mantenible;
-+ Buenas prácticas: además de los unit tests, recomendamos y esperamos que escribas tests que cubran tu solución de extremo a extremo, es decir, desde el input del programa hasta el output. Una forma de hacerlo es agregando tests de integración;
-+ Validación de tests: esperamos que la solución sea validada con tests. La ausencia de tests puede impactar la evaluación de la calidad de tu solución, ya que consideramos los tests como una parte esencial del proceso de desarrollo.
++ *Simplicidad*: se espera que la solución sea un proyecto pequeño y fácil de entender;
++ *Elegancia*: se espera que la solución sea fácil de mantener, tenga una clara separación de responsabilidades y una organización del código bien estructurada;
++ *Operatividad*: se espera que la solución resuelva el problema, cubra posibles casos límite y sea extensible para futuras decisiones de diseño;
++ *Calidad*: a medida que estructuras tu código, esperamos que escribas tests para asegurar que el programa funcione correctamente. Tests bien escritos ayudan a construir una solución robusta y mantenible;
++ *Validación de tests*: esperamos que la solución sea validada con tests. La ausencia de tests puede impactar la evaluación de la calidad de tu solución, ya que consideramos los tests como una parte esencial del proceso de desarrollo.
 
 Buscaremos:
-+ El uso de transparencia referencial cuando aplique;
-+ Unit e integration tests de calidad;
++ Unit tests de calidad;
 + Documentación donde sea necesaria;
 
-* Agrega un README
-Tu solución debe contener un archivo README que incluya:
-- Discusión de las decisiones técnicas y arquitectónicas;
+* DESIGN_DOC.md
+Contesta las preguntas en el archivo ~DESIGN_DOC.md~ en la raíz del proyecto. Este archivo es parte de la evaluación de tu solución.
 
 * FAQ
 #+begin_quote
